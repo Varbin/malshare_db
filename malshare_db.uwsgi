@@ -1,0 +1,5 @@
+[uwsgi]
+http = 127.0.0.1:8000
+module = malshare_db
+workers = 4
+master = 1
