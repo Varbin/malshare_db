@@ -1,6 +1,26 @@
 # MalShare database server
 Conversion of htttps://malshare.com hashes to ClamAV databases
 
+## Standarts
+
+The script conforms to
+[PEP-8](https://www.python.org/dev/peps/pep-0008/) (Python style guide) and
+[PEP-3333](https://www.python.org/dev/peps/pep-3333/) (WSGI).
+
+## Installation
+
+`pip install git+https://github.com/Varbin/malshare_db`
+
+Requirements are installed automatically.
+
+### Requirements:
+ - [portalocker](https://pypi.org/project/portalocker/)
+ - [requests](https://pypi.org/project/requests/)
+
+Optional:
+ - [requests-cache](https://pypi.projects/requests-cache/)] for increased speed.
+ - [aiohttp](https://pypi.org/project/aiohttp/) + [aiohttp_wsgi](https://pypi.python.org/pypi/aiohttp_wsgi/)
+
 ## Documentation
 
 
@@ -45,7 +65,7 @@ Environment variables:
 Optimizations:
  - Install requests-cache. This will enable caching the MalShare-current.* files. The cache is on a per-process-basis for security reasons, so the cache must be initialized for each process in multiprocess deployments. There will be no benefits if the application is only executed once for each request (e.g. CGI) as the cache is not shared. If security problems are solved within requests-cache then a shared cache might be readded.
 
- - Use an external WSGI server for deployment. uWSGI and gunicorn both seem to be a good choice. This script offers the common entrypoints for WSGI 'app' and 'application'. For aiohttp deployments 'aioapp' is defined. See below for examples.
+ - Use an external WSGI server for deployment. uWSGI and gunicorn both seem to be a good choice. This script offers the common entrypoints for WSGI server 'app' and 'application'. For aiohttp deployments 'aioapp' is defined. See below for examples.
 
 Examples:
 

@@ -68,7 +68,7 @@ requests-cache a shared cache might be readded.
 
     - Use an external WSGI server for deployment. uWSGI and \
 gunicorn both seem to be a good choice. This script offers the \
-common entrypoints for WSGI 'app' and 'application'. For aiohttp \
+common entrypoints for WSGI servers 'app' and 'application'. For aiohttp \
 deployments 'aioapp' is defined. See below for \
 examples.
 
