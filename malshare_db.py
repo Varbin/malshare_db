@@ -413,7 +413,7 @@ def main(argv=sys.argv, env=os.environ):  # pylint: disable=R0912,R0915,W0102
     "Self-deployment of malshare_db."
     if len(sys.argv) > 2 or "--help" in sys.argv:
         print(__doc__)
-        sys.exit(1)
+        return 1
 
     if "--version" in sys.argv:
         print("Version:", __version__)
@@ -432,7 +432,7 @@ def main(argv=sys.argv, env=os.environ):  # pylint: disable=R0912,R0915,W0102
         print(" - aiohttp_wsgi:", end=' ')
         print(("not installed or aiohttp missing"
                "") if not AIOHTTP else aiohttp_wsgi.__version__)
-        sys.exit(0)
+        return 0
 
     wsgi_host = env.get("WSGI_HOST", "127.0.0.1") or "127.0.0.1"
     wsgi_port = env.get("WSGI_PORT", None)
@@ -442,7 +442,7 @@ def main(argv=sys.argv, env=os.environ):  # pylint: disable=R0912,R0915,W0102
             wsgi_port = int(wsgi_port)
         except ValueError:
             sys.stderr.write("Error: wsgi_port is not a number!\n")
-            sys.exit(1)
+            return 1
 
     if any(arg.startswith("--wsgi") for arg in argv):
         wsgi_port = wsgi_port or 8000
@@ -474,7 +474,7 @@ def main(argv=sys.argv, env=os.environ):  # pylint: disable=R0912,R0915,W0102
 
         if WSGIServer is None:
             sys.stderr.write("Error: No FastCGI server found.\n")
-            sys.exit(2)
+            return 2
 
         if "--fcgi-server" in sys.argv:
             server = WSGIServer(
@@ -492,7 +492,7 @@ def main(argv=sys.argv, env=os.environ):  # pylint: disable=R0912,R0915,W0102
             sys.stderr.write(
                 "Error: aiohttp or aiohttp_wsgi not found or "
                 "could not be initialized.\n")
-            sys.exit(2)
+            return 2
 
         logging.basicConfig(format="%(message)s")
         logging.getLogger("aiohttp").setLevel(logging.INFO)
@@ -526,6 +526,8 @@ def main(argv=sys.argv, env=os.environ):  # pylint: disable=R0912,R0915,W0102
         else:
             print("Database update successfull ;)")
 
+    return 0
+
 
 if __name__ == "__main__":
-    main(sys.argv, os.environ)
+    sys.exit(main(sys.argv, os.environ))
