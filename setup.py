@@ -26,15 +26,28 @@ with open('malshare_db.py') as malshare_db:
 metadata = dict(re.findall("__([a-z]+)__ = '([^']+)'", code))
 
 setup(
+    name="malshare_db",
+    version=metadata.get('version'),
+
     author=metadata.get('author'),
     author_email=metadata.get('email'),
     license=metadata.get('license'),
-    name="malshare_db",
     url='https://sbiewald.de/malsh-cav',
-    version=metadata.get('version'),
 
     py_modules=['malshare_db'],
-    entry_points = {
+    entry_points={
         'console_scripts': ['malshare-db=malshare_db:main'],
     },
+    
+    classifiers=[
+        'Framework :: AsyncIO',
+        'Development Status :: 4 - Beta',
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Topic :: Internet :: WWW/HTTP :: WSGI :: Application',
+        'Topic :: Security',
+    ]
 )
