@@ -165,7 +165,7 @@ ERROR_NOT_FOUND = ("404 Not Found", [("Content-Type", "text/plain"),
 
 
 def daterange(start, stop):
-    "Creates a genrator which returns dates from start to stop."
+    "Creates a generator which returns dates from start to stop."
     for i in range(abs((start - stop).days)):
         yield timedelta(days=i) + min(start, stop)
 
@@ -396,7 +396,8 @@ def app(environ, start_response, strip=os.environ.get("WSGI_PATH_STRIP", "")):
 application = app  # pylint: disable=invalid-name
 validated_app = validator(app)  # pylint: disable=invalid-name
 validated_app.__doc__ = (
-    "WSGI application wrapped with wsgiref.validate.validator")
+    "'application' wrapped with wsgiref.validate.validator")
+validated_app.__module__ = app.__module__
 
 if AIOHTTP:
     try:
