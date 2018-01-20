@@ -11,15 +11,17 @@ The script conforms to
 
 `pip install git+https://github.com/Varbin/malshare_db`
 
-Requirements are installed automatically.
+Dependencies are installed automatically.
 
-### Requirements:
+### Dependencies
  - [portalocker](https://pypi.org/project/portalocker/)
  - [requests](https://pypi.org/project/requests/)
 
 Optional:
  - [requests-cache](https://pypi.org/project/requests-cache/) for increased speed.
- - [aiohttp](https://pypi.org/project/aiohttp/) + [aiohttp_wsgi](https://pypi.python.org/pypi/aiohttp_wsgi/)
+ - [aiohttp](https://pypi.org/project/aiohttp/) + [aiohttp-wsgi](https://pypi.python.org/pypi/aiohttp_wsgi/)
+
+The optional requirements a defined as extras: malshare\[cache\] and malshare\[aio\].
 
 ## Documentation
 

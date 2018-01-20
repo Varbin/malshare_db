@@ -39,6 +39,11 @@ setup(
         'console_scripts': ['malshare-db=malshare_db:main'],
     },
     scripts=['malshare-db.cgi', 'malshare-db.fcgi'],
+    install_requires=['portalocker', 'requests'],
+    extras_require={
+        'aio': ['aiohttp', 'aiohttp-wsgi'],
+        'cache': ['requests-cache'],
+    },
     
     classifiers=[
         'Framework :: AsyncIO',
