@@ -18,7 +18,7 @@ Requirements are installed automatically.
  - [requests](https://pypi.org/project/requests/)
 
 Optional:
- - [requests-cache](https://pypi.org/projects/requests-cache/) for increased speed.
+ - [requests-cache](https://pypi.org/project/requests-cache/) for increased speed.
  - [aiohttp](https://pypi.org/project/aiohttp/) + [aiohttp_wsgi](https://pypi.python.org/pypi/aiohttp_wsgi/)
 
 ## Documentation
