@@ -1,6 +1,5 @@
-requests
+aiohttp
+aiohttp_wsgi
 portalocker
-requests_cache [cache]
-aiohttp [aio]
-aiohttp_wsgi [aio]
-
+requests
+requests-cache

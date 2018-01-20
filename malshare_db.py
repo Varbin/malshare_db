@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 MalShare to ClamAV converter
 
@@ -92,7 +93,15 @@ malshare_db:aioapp
 http://127.0.0.1:1234.
 """
 
-__version__ = "0.1"
+from __future__ import print_function
+
+# Use single quotes for metadata
+__version__ = '0.1'
+
+__author__ = 'Simon Biewald'
+__credits__ = ["malshare.com"]
+__email__ = 'simon.biewald@hotmail.de'
+__license__ = 'MIT'
 
 from datetime import date, timedelta, datetime
 from wsgiref.handlers import CGIHandler
@@ -117,8 +126,6 @@ except ImportError:
     AIOHTTP = False
 else:
     import asyncio
-    from concurrent.futures import ThreadPoolExecutor
-
     AIOHTTP = True
 
 try:
@@ -394,7 +401,8 @@ if AIOHTTP:
                             WSGIHandler(app))
 
 
-if __name__ == "__main__":
+def main(argv=sys.argv, env=os.environ):  # pylint: disable=R0912,R0915,W0102
+    "Self-deployment of malshare_db."
     if len(sys.argv) > 2 or "--help" in sys.argv:
         print(__doc__)
         sys.exit(1)
@@ -418,26 +426,28 @@ if __name__ == "__main__":
                "") if not AIOHTTP else aiohttp_wsgi.__version__)
         sys.exit(0)
 
-    WSGI_HOST = os.environ.get("WSGI_HOST", "127.0.0.1") or "127.0.0.1"
-    WSGI_PORT = os.environ.get("WSGI_PORT", None)
+    wsgi_host = env.get("WSGI_HOST", "127.0.0.1") or "127.0.0.1"
+    wsgi_port = env.get("WSGI_PORT", None)
 
-    if WSGI_PORT is not None:
+    if wsgi_port is not None:
         try:
-            WSGI_PORT = int(WSGI_PORT)
+            wsgi_port = int(wsgi_port)
         except ValueError:
-            sys.stderr.write("Error: WSGI_PORT is not a number!\n")
+            sys.stderr.write("Error: wsgi_port is not a number!\n")
             sys.exit(1)
 
-    if any(arg.startswith("--wsgi") for arg in sys.argv):
-        WSGI_PORT = WSGI_PORT or 8000
-        sys.stderr.write("Serving on {}:{}...\n".format(WSGI_HOST, WSGI_PORT))
-    elif "--fcgi-server" in sys.argv:
-        WSGI_PORT = WSGI_PORT or 9000
-        sys.stderr.write("Serving on {}:{}...\n".format(WSGI_HOST, WSGI_PORT))
+    if any(arg.startswith("--wsgi") for arg in argv):
+        wsgi_port = wsgi_port or 8000
+        sys.stderr.write(
+            "Serving on http://{}:{}...\n".format(wsgi_host, wsgi_port))
+    elif "--fcgi-server" in argv:
+        wsgi_port = wsgi_port or 9000
+        sys.stderr.write(
+            "Serving on fcgi://{}:{}...\n".format(wsgi_host, wsgi_port))
 
-    if "--cgi" in sys.argv:
+    if "--cgi" in argv:
         CGIHandler().run(app)
-    elif "--fcgi" in sys.argv or "--fcgi-server" in sys.argv:
+    elif "--fcgi" in argv or "--fcgi-server" in sys.argv:
         WSGIServer = None  # pylint: disable=invalid-name
         try:
             from flup.server.fcgi import WSGIServer
@@ -459,17 +469,17 @@ if __name__ == "__main__":
             sys.exit(2)
 
         if "--fcgi-server" in sys.argv:
-            server = WSGIServer(  # pylint: disable=invalid-name
-                app, bindAddress=(WSGI_HOST, WSGI_PORT))
+            server = WSGIServer(
+                app, bindAddress=(wsgi_host, wsgi_port))
         else:
-            server = WSGIServer(app)  # pylint: disable=invalid-name
+            server = WSGIServer(app)
 
         server.run()
-    elif "--wsgiref" in sys.argv:
-        httpd = make_server(  # pylint: disable=invalid-name
-            WSGI_HOST, WSGI_PORT or 8000, validated_app)
+    elif "--wsgiref" in argv:
+        httpd = make_server(
+            wsgi_host, wsgi_port or 8000, validated_app)
         httpd.serve_forever()
-    elif "--wsgiaio" in sys.argv:
+    elif "--wsgiaio" in argv:
         if not AIOHTTP:
             sys.stderr.write("Error: aiohttp or aiohttp_wsgi not found!\n")
             sys.exit(2)
@@ -477,11 +487,11 @@ if __name__ == "__main__":
         logging.basicConfig(format="%(message)s")
         logging.getLogger("aiohttp").setLevel(logging.INFO)
 
-        loop = asyncio.get_event_loop()  # pylint: disable=invalid-name
-        handler = aioapp.make_handler(  # pylint: disable=invalid-name
+        loop = asyncio.get_event_loop()
+        handler = aioapp.make_handler(
             access_log=access_logger)
-        srv = loop.run_until_complete(  # pylint: disable=invalid-name
-            loop.create_server(handler, WSGI_HOST, WSGI_PORT))
+        srv = loop.run_until_complete(
+            loop.create_server(handler, wsgi_host, wsgi_port))
 
         try:
             loop.run_forever()
@@ -505,3 +515,7 @@ if __name__ == "__main__":
             print("Database is up to date ;)")
         else:
             print("Database update successfull ;)")
+
+
+if __name__ == "__main__":
+    main(sys.argv, os.environ)
