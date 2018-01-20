@@ -112,6 +112,7 @@ import itertools
 import logging
 import os
 import sys
+import traceback
 
 import portalocker
 import requests
@@ -394,11 +395,18 @@ def app(environ, start_response, strip=os.environ.get("WSGI_PATH_STRIP", "")):
 
 application = app  # pylint: disable=invalid-name
 validated_app = validator(app)  # pylint: disable=invalid-name
+validated_app.__doc__ = (
+    "WSGI application wrapped with wsgiref.validate.validator")
 
 if AIOHTTP:
-    aioapp = web.Application()  # pylint: disable=invalid-name
-    aioapp.router.add_route("*", "/{path_info:.*}",
-                            WSGIHandler(app))
+    try:
+        aioapp = web.Application()  # pylint: disable=invalid-name
+        aioapp.router.add_route("*", "/{path_info:.*}",
+                                WSGIHandler(app))
+    except RuntimeError:
+        sys.stderr.write("Error initializing aiohttp!\n")
+        traceback.print_exc(file=sys.stderr)
+        AIOHTTP = False
 
 
 def main(argv=sys.argv, env=os.environ):  # pylint: disable=R0912,R0915,W0102
@@ -481,7 +489,9 @@ def main(argv=sys.argv, env=os.environ):  # pylint: disable=R0912,R0915,W0102
         httpd.serve_forever()
     elif "--wsgiaio" in argv:
         if not AIOHTTP:
-            sys.stderr.write("Error: aiohttp or aiohttp_wsgi not found!\n")
+            sys.stderr.write(
+                "Error: aiohttp or aiohttp_wsgi not found or "
+                "could not be initialized.\n")
             sys.exit(2)
 
         logging.basicConfig(format="%(message)s")
