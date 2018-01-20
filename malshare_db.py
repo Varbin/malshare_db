@@ -53,7 +53,7 @@ Environment variables:
         Default: 8000 for HTTP; 9000 for FastCGI
 
     WSGI_PATH_STRIP=path    Strips path from the beginning \
-of a request path. This is hack as some webservers do not \
+of a request path. This is a hack as some webservers do not \
 allow stripping  the beginning of a path. Implementation detail: \
 Additional endpoints starting with path are added.
 
@@ -64,7 +64,7 @@ for security reasons, so the cache must be initialized for each process \
 in multiprocess deployments. There will be no benefits if the \
 application is only executed once for each request (e.g. CGI) as \
 the cache is not shared. If security problems are solved within \
-requests-cache then a shared cache might be readded.
+requests-cache a shared cache might be readded.
 
     - Use an external WSGI server for deployment. uWSGI and \
 gunicorn both seem to be a good choice. This script offers the \
