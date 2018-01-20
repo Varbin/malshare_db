@@ -38,6 +38,7 @@ setup(
     entry_points={
         'console_scripts': ['malshare-db=malshare_db:main'],
     },
+    scripts=['malshare-db.cgi', 'malshare-db.fcgi'],
     
     classifiers=[
         'Framework :: AsyncIO',
