@@ -25,12 +25,10 @@ current directory.
 
 
 For --fcgi and --fcgi-server one of the packages \
-flup (Python < 3), flup6 (Python >= 3) or \
-flipflop (also Python >= 3) is required. \
+flup (Python 2 and Python 3 in dev version), flup6 (Python >= 3), \
+gevent-fastcgi (Python 2) or flipflop (also Python >= 3) is required. \
 The package flipflop does not support --fcgi-server.
 
-When using --fcgi only a small portion of the main database \
-can be downloaded (bug). \
 With --fcgi-server the main database download is really slow \
 (low latency, but also low throughput and a high CPU usage).
 
@@ -57,6 +55,10 @@ of a request path. This is a hack as some webservers do not \
 allow stripping  the beginning of a path. Implementation detail: \
 Additional endpoints starting with path are added.
 
+    WSGI_FCGI_LIB=lib   Sets the FCGI library to use (default: choose \
+automatically). Possible values: flup, flup6, flipflop, gevent-fastcgi. \
+flup and flup6 are equivalent - both packages share the same namespace.
+
 Optimizations:
     - Install requests-cache. This will enable caching the \
 MalShare-current.* files. The cache is on a per-process-basis \
@@ -68,8 +70,9 @@ requests-cache a shared cache might be readded.
 
     - Use an external WSGI server for deployment. uWSGI and \
 gunicorn both seem to be a good choice. This script offers the \
-common entrypoints for WSGI servers 'app' and 'application'. For aiohttp \
-deployments 'aioapp' is defined. See below for \
+common entrypoints for WSGI servers 'app' and 'application'. If you \
+use cherrypy malshare_db can be simply integrated in your application.
+For aiohttp deployments 'aioapp' is defined. See below for \
 examples.
 
 Examples:
@@ -77,10 +80,10 @@ Examples:
         PATH_STRIP=/malshare WSGI_PORT=1234 malshare_db.py --wsgiref
         - Start this script on the WSGIref server on http://127.0.0.1:1234.
         - Valid requests:
-            http://127.0.0.1:8080/MalShare.hdb
-            http://127.0.0.1:8080/MalShare-current.hdb
-            http://127.0.0.1:8080/MalShare-current.hsb
-            http://127.0.0.1:8080/malshare/MalShare.hdb
+            http://127.0.0.1:1234/MalShare.hdb
+            http://127.0.0.1:1234/MalShare-current.hdb
+            http://127.0.0.1:1234/MalShare-current.hsb
+            http://127.0.0.1:1234/malshare/MalShare.hdb
             ...
 
     Deployment with externel server (e.g. uWSGI, Gunicorn):
@@ -91,6 +94,15 @@ Examples:
 malshare_db:aioapp
         - Start this script on Gunicorn with aiohttp on \
 http://127.0.0.1:1234.
+
+Resources:
+ - malshare.com (https://malshare.com)
+ - gunicorn 'Green unicorn' (http://gunicorn.org)
+ - uWSGI (https://uwsgi-docs.readthedocs.io)
+ - CherryPy - Host a foreign WSGI application in CherryPy \
+(http://docs.cherrypy.org/en/latest/\
+advanced.html#host-a-foreign-wsgi-application-in-cherrypy)
+ - WSGI standart PEP-3333 (https://www.python.org/dev/peps/pep-3333/)
 """
 
 from __future__ import print_function
@@ -102,8 +114,16 @@ __author__ = 'Simon Biewald'
 __credits__ = ["malshare.com"]
 __email__ = 'simon.biewald@hotmail.de'
 __license__ = 'MIT'
+__all__ = [
+    'daterange', 'hash_to_db',
+    'malshare_by_date', 'malshare_by_dates',
+    'malshare_current', 'malshare_update',
+    'app', 'application', 'validated_app',
+    'fastcgi'
+]
 
 from datetime import date, timedelta, datetime
+from multiprocessing import cpu_count
 from wsgiref.handlers import CGIHandler
 from wsgiref.simple_server import make_server
 from wsgiref.validate import validator
@@ -136,6 +156,9 @@ except ImportError:
 else:
     requests_cache.install_cache(backend='memory', expire_after=1800)
     REQUESTS_CACHE = True
+
+VALID_FCGI_SERVER = ["gevent-fastcgi", "flup6", "flup"]
+VALID_FCGI_SPAWN = ["flup6", "flup", "flipflop"]
 
 DEBUG = os.environ.get("DEBUG") is not None
 
@@ -308,6 +331,73 @@ def malshare_update(filename, suffix=""):
         return True
 
 
+def fastcgi(
+        wsgi_application, spawn=False,
+        address=('127.0.0.1', 9000),
+        use=os.environ.get("WSGI_FCGI_LIB")
+    ):
+    "Creates an FastCGI server for wsgi_application."
+
+    if spawn:
+        valid_libs = VALID_FCGI_SPAWN
+        address = None
+    else:
+        valid_libs = VALID_FCGI_SERVER
+
+    if use is None:
+        use_libs = valid_libs
+    else:
+        if use.lower() not in valid_libs:
+            raise ValueError(
+                "Invalid FastCGI library. "
+                "Valid for the selected mode are: {}".format(
+                    ", ".join(valid_libs)))
+        use_libs = [use.lower()]
+
+    for lib in use_libs:
+        try:
+            if lib == "gevent-fastcgi":
+                from gevent_fastcgi.server import FastCGIServer
+                from gevent_fastcgi.wsgi import WSGIRequestHandler
+
+                request_handler = WSGIRequestHandler(wsgi_application)
+                server = FastCGIServer(address, request_handler,
+                                       num_workers=cpu_count())
+                sys.stderr.write("FCGI library: gevent-fastcgi\n")
+                server.serve_forever()
+                break
+
+            elif lib in ("flup", "flup6"):
+                from flup.server.fcgi import WSGIServer
+                server = WSGIServer(wsgi_application, bindAddress=address)
+                sys.stderr.write("FCGI library: flup/flup6\n")
+                server.run()
+                break
+
+            elif lib == "flipflop":
+                from flipflop import WSGIServer
+                server = WSGIServer(wsgi_application)
+
+                sys.stderr.write("FCGI library: flipflop\n")
+                server.run()
+                break
+
+        except (ImportError, SyntaxError):
+            continue
+        except KeyboardInterrupt:
+            sys.stderr.write("\nAborted.\n")
+            break
+    else:
+        if len(use_libs) == 1:
+            sys.stderr.write(
+                "The selected FastCGI library could not be used.\n")
+        else:
+            sys.stderr.write("No usable FastCGI library found.\n")
+        return 1
+
+    return 0
+
+
 def app(environ, start_response, strip=os.environ.get("WSGI_PATH_STRIP", "")):
     """WSGI application object for distributing MalShare's database.
 
@@ -457,33 +547,8 @@ def main(argv=sys.argv, env=os.environ):  # pylint: disable=R0912,R0915,W0102
     if "--cgi" in argv:
         CGIHandler().run(app)
     elif "--fcgi" in argv or "--fcgi-server" in sys.argv:
-        WSGIServer = None  # pylint: disable=invalid-name
-        try:
-            from flup.server.fcgi import WSGIServer
-        except ImportError:
-            try:
-                if "--fcgi" in sys.argv:
-                    from flipflop import WSGIServer
-                else:
-                    raise ImportError
-            except ImportError:
-                pass
-            else:
-                sys.stderr.write("FastCGI server: FlipFlop\n")
-        else:
-            sys.stderr.write("FastCGI server: Flup/Flup6\n")
-
-        if WSGIServer is None:
-            sys.stderr.write("Error: No FastCGI server found.\n")
-            return 2
-
-        if "--fcgi-server" in sys.argv:
-            server = WSGIServer(
-                app, bindAddress=(wsgi_host, wsgi_port))
-        else:
-            server = WSGIServer(app)
-
-        server.run()
+        return fastcgi(app, "--fcgi" in argv, (wsgi_host, wsgi_port),
+                       use=env.get("WSGI_FCGI_LIB"))
     elif "--wsgiref" in argv:
         httpd = make_server(
             wsgi_host, wsgi_port or 8000, validated_app)
