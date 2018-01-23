@@ -223,7 +223,7 @@ def malshare_by_date(pub_date=None, suffix=""):
     """Download a single day's MalShare hashes and convert them.
 
     pub_data (date object): The date.
-    suffix (string): A suffix to add to the signatures name.\
+    suffix (string): A suffix to add to the signatures name.
         Usefull to indicate a different algorithm.
     """
 
@@ -487,7 +487,6 @@ application = app  # pylint: disable=invalid-name
 validated_app = validator(app)  # pylint: disable=invalid-name
 validated_app.__doc__ = (
     "'application' wrapped with wsgiref.validate.validator")
-validated_app.__module__ = app.__module__
 
 if AIOHTTP:
     try:
