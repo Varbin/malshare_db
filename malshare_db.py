@@ -450,6 +450,8 @@ def app(environ, start_response, strip=os.environ.get("WSGI_PATH_STRIP", "")):
                     suffix,
                     (environ.get("HTTP_X_FORWARDED_FOR") or
                      environ.get("REMOTE_HOST")))
+                if not msg:
+                    status = "204 No Content"
                 msg = [msg.encode()]
             except requests.RequestException as error:
                 msg = [
@@ -474,10 +476,6 @@ def app(environ, start_response, strip=os.environ.get("WSGI_PATH_STRIP", "")):
 
         if environ.get("wsgi.file_wrapper"):
             msg = environ["wsgi.file_wrapper"](msg)
-
-    else:
-        status = "500 Server Error"
-        msg = [b"Internal Server\n\nUnhandled status."]
 
     start_response(status, headers)
     return msg
