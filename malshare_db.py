@@ -182,9 +182,9 @@ The connection to the remote gateway failed.
 Error type: {}
 """
 
-ERROR_NOT_FOUND = ("404 Not Found", [("Content-Type", "text/plain"),
-                                     ("Content-Length", "13")],
-                   [b"404 Not Found"])
+ERROR_NOT_FOUND = lambda: ("404 Not Found", [("Content-Type", "text/plain"),
+                                             ("Content-Length", "13")],
+                           [b"404 Not Found"])
 
 
 def daterange(start, stop):
@@ -433,7 +433,7 @@ def app(environ, start_response, strip=os.environ.get("WSGI_PATH_STRIP", "")):
         headers += [("Content-Length", "35"), ("Allow", "GET, OPTIONS")]
         msg = [b'405 Method Not Allowed\nAllowed: GET']
     elif path_info not in valid_paths:
-        status, headers, msg = ERROR_NOT_FOUND
+        status, headers, msg = ERROR_NOT_FOUND()
     elif request_method == ("OPTIONS"):
         headers = [("Allow", "GET, OPTIONS"), ("Content-Length", "0")]
         msg = []
@@ -443,7 +443,7 @@ def app(environ, start_response, strip=os.environ.get("WSGI_PATH_STRIP", "")):
         elif path_info.partition(".")[2] == "hsb":
             suffix = ".sha1"
         else:
-            status, headers, msg = ERROR_NOT_FOUND
+            status, headers, msg = ERROR_NOT_FOUND()
         if not status.startswith("404"):
             try:
                 msg, cached = malshare_current(
@@ -477,6 +477,7 @@ def app(environ, start_response, strip=os.environ.get("WSGI_PATH_STRIP", "")):
         if environ.get("wsgi.file_wrapper"):
             msg = environ["wsgi.file_wrapper"](msg)
 
+    print(headers)
     start_response(status, headers)
     return msg
 
