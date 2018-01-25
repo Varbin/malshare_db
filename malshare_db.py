@@ -477,7 +477,6 @@ def app(environ, start_response, strip=os.environ.get("WSGI_PATH_STRIP", "")):
         if environ.get("wsgi.file_wrapper"):
             msg = environ["wsgi.file_wrapper"](msg)
 
-    print(headers)
     start_response(status, headers)
     return msg
 
