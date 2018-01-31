@@ -29,9 +29,6 @@ flup (Python 2 and Python 3 in dev version), flup6 (Python >= 3), \
 gevent-fastcgi (Python 2) or flipflop (also Python >= 3) is required. \
 The package flipflop does not support --fcgi-server.
 
-With --fcgi-server the main database download is really slow \
-(low latency, but also low throughput and a high CPU usage).
-
 The --wsgiref option also validates the script if it is \
 conforming to the WSGI standart. Do not use --wsgiref in \
 production, use a proper WSGI server. While it has a \
@@ -476,6 +473,8 @@ def app(environ, start_response, strip=os.environ.get("WSGI_PATH_STRIP", "")):
 
         if environ.get("wsgi.file_wrapper"):
             msg = environ["wsgi.file_wrapper"](msg)
+        else:
+            msg = iter(lambda: db_file.read(8192), b'')
 
     start_response(status, headers)
     return msg
