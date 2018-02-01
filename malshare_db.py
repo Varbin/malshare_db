@@ -469,10 +469,10 @@ def app(environ, start_response, strip=os.environ.get("WSGI_PATH_STRIP", "")):
         length = str(os.path.getsize("MalShare.hdb"))
         headers += [("Content-Length", length)]
         headers += [("Content-Disposition", "attachment")]
-        msg = open("MalShare.hdb", "rb")
+        db_file = open("MalShare.hdb", "rb")
 
         if environ.get("wsgi.file_wrapper"):
-            msg = environ["wsgi.file_wrapper"](msg)
+            msg = environ["wsgi.file_wrapper"](db_file)
         else:
             msg = iter(lambda: db_file.read(8192), b'')
 
